@@ -1,0 +1,143 @@
+<html>
+  <head>
+    <title>IO Chat</title>
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://code.jquery.com/jquery-2.2.4.min.js"
+      integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+      crossorigin="anonymous"
+    ></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+      body {
+        margin-top: 30px;
+        background-color: #f8f9fa;
+        font-family: Arial, sans-serif;
+      }
+
+      .chat-container {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .chat-box {
+        width: 70%;
+        padding: 10px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        height: 400px;
+        overflow-y: auto;
+        margin-right: 20px;
+      }
+
+      .online-users {
+        width: 25%;
+        padding: 10px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        height: 400px;
+        overflow-y: auto;
+      }
+
+      .message-box {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      .form-group textarea {
+        resize: none;
+      }
+
+      .message {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+      }
+
+      .online-users li {
+        padding: 5px 0;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .online-users li:last-child {
+        border-bottom: none;
+      }
+
+      .chat-header {
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="chat-container">
+        <!-- Online Users Sidebar -->
+        <div class="online_users">
+          <h4>Online Users</h4>
+          <ul class="list-group" id="users"></ul>
+        </div>
+
+        <!-- Chat Box -->
+        <div class="chat-box">
+          <div id="chat" class="chat-header">
+            <!-- Chat messages will be inserted here -->
+          </div>
+
+          <form id="messageForm">
+            <div class="message-box">
+              <div class="form-group">
+                <textarea
+                  class="form-control"
+                  id="message"
+                  rows="3"
+                  placeholder="Type a message..."
+                ></textarea>
+              </div>
+              <button type="submit" class="btn btn-danger">Send Message</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // maka akan terhubung dengna web socket status 101
+      // http://localhost:3000/
+      var socket = io();
+
+      $("#messageForm").submit(function (e) {
+        e.preventDefault();
+        var message = $("#message").val().trim(); // Menambahkan .trim() untuk menghapus spasi kosong
+        if (message) {
+          socket.emit("send_message", { message: message });
+          $("#message").val(""); // Clear the message input
+        } else {
+          console.log("Pesan kosong, tidak akan dikirim.");
+        }
+      });
+
+      socket.on("message", function (data) {
+        var messageHtml = "<div class='message'>" + data + "</div>";
+        $("#chat").append(messageHtml);
+        $("#chat").scrollTop($("#chat")[0].scrollHeight); // Auto-scroll ke bawah saat pesan diterima
+      });
+
+      // Ketika menerima daftar user online, tampilkan di sidebar
+      socket.on("online_users", function (users) {
+        $("#users").empty(); // Kosongkan daftar sebelumnya
+        users.forEach(function (user) {
+          $("#users").append("<li>" + user.user.id + "</li>");
+        });
+      });
+    </script>
+  </body>
+</html>
